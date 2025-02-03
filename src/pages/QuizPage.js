@@ -57,7 +57,7 @@ const QuizPage = () => {
         await addDoc(collection(db, 'quizzes'), {
           userId: user.uid,
           score,
-          sessionName: 'quizzes', // 필요에 따라 수정
+          sessionName: 'quizzes', 
           completedAt: new Date(),
         });
         console.log('✅ 퀴즈 결과가 저장되었습니다.');
@@ -139,5 +139,7 @@ const QuizPage = () => {
     </div>
   );
 };
+
+
 
 export default QuizPage;

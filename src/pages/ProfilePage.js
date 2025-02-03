@@ -1,31 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db } from '../firebase';
+import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { useAuth } from '../components/AuthContext';
 import { Typography, Card, CardContent, Button, Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
-  const [user, setUser] = useState(null);
+  const { currentUser } = useAuth();
   const [quizSessions, setQuizSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // 사용자 인증 상태 감시
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        await fetchQuizSessions(currentUser.uid);
-      } else {
-        setUser(null);
-        setQuizSessions([]);
-      }
-      setIsLoading(false);
-    });
+    if (currentUser) {
+      fetchQuizSessions(currentUser.uid);
+    } else {
+      setIsLoading(false); // 사용자 미로그인 상태에서는 로딩 종료
+    }
+  }, [currentUser]);
 
-    return () => unsubscribe();
-  }, []);
-
-  // Firestore에서 해당 사용자의 퀴즈 세션 가져오기
   const fetchQuizSessions = async (userId) => {
     try {
       const sessionsQuery = query(
@@ -39,22 +32,31 @@ const ProfilePage = () => {
       }));
       setQuizSessions(sessions);
     } catch (error) {
-      console.error('🔥 Firestore에서 퀴즈 세션 가져오기 오류:', error);
+      console.error('🔥 퀴즈 기록 조회 오류:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Typography>로딩 중입니다...</Typography>;
   }
 
-  if (!user) {
-    return <div>로그인이 필요합니다.</div>;
+  if (!currentUser) {
+    return (
+      <Box sx={{ textAlign: 'center', marginTop: '20px' }}>
+        <Typography variant="h6">로그인이 필요합니다.</Typography>
+        <Button variant="contained" color="primary" onClick={() => navigate('/login')}>
+          로그인 화면으로 이동
+        </Button>
+      </Box>
+    );
   }
 
   return (
     <Box sx={{ padding: '20px', textAlign: 'center' }}>
       <Typography variant="h4" gutterBottom>
-        {user.displayName || '사용자'}님의 퀴즈 기록
+        {currentUser.displayName || '사용자'}님의 퀴즈 기록
       </Typography>
 
       {quizSessions.length === 0 ? (
@@ -68,7 +70,7 @@ const ProfilePage = () => {
               <Button
                 variant="contained"
                 sx={{ marginTop: 1 }}
-                onClick={() => window.location.href = `/quiz/${session.id}`}
+                onClick={() => navigate(`/quiz/${session.id}`)}
               >
                 복습하기
               </Button>

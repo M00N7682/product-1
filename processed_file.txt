@@ -1,7 +1,0 @@
-Account|Description|Debit|Credit
-0    |Null|Null|Null
-Null |Null|Null|Null
-Null |Null|Null|Null
-2,000|Null|Null|Null
-0    |Null|Null|Null
-1,000|Null|Null|Null
